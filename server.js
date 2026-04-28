@@ -10,13 +10,11 @@ const CLIENT_ID     = process.env.JOBBER_CLIENT_ID;
 const CLIENT_SECRET = process.env.JOBBER_CLIENT_SECRET;
 const REDIRECT_URI  = process.env.REDIRECT_URI;
 
-// Step 1 — Send user to Jobber login
 app.get('/auth', (req, res) => {
   const url = `https://api.getjobber.com/api/oauth/authorize?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
   res.redirect(url);
 });
 
-// Step 2 — Jobber redirects back here with a code, exchange it for a token
 app.get('/callback', async (req, res) => {
   const code = req.query.code;
   try {
@@ -33,15 +31,12 @@ app.get('/callback', async (req, res) => {
     });
     const data = await response.json();
     const token = data.access_token;
-
-    // Store token temporarily and redirect back to calculator with it
     res.redirect(`https://sevandust.github.io/armor-coating-jobber/calculator.html?token=${token}`);
   } catch(err) {
     res.status(500).send('Auth failed: ' + err.message);
   }
 });
 
-// Step 3 — Calculator calls this to get recent jobs
 app.get('/jobs', async (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'No token' });
@@ -55,10 +50,11 @@ app.get('/jobs', async (req, res) => {
         'X-JOBBER-GRAPHQL-VERSION': '2025-04-16'
       },
       body: JSON.stringify({ query: `{
-        jobs(first: 20) {
+        quotes(first: 30, filter: { statuses: [DRAFT, SENT, APPROVED, CONVERTED] }) {
           nodes {
             id
             title
+            quoteNumber
             client { name }
             property { address { street city province postalCode } }
             lineItems {
@@ -73,6 +69,12 @@ app.get('/jobs', async (req, res) => {
       }`})
     });
     const data = await response.json();
+
+    if (data.data && data.data.quotes) {
+      data.data.jobs = { nodes: data.data.quotes.nodes };
+      delete data.data.quotes;
+    }
+
     res.json(data);
   } catch(err) {
     res.status(500).json({ error: err.message });
