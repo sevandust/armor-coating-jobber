@@ -50,7 +50,7 @@ app.get('/jobs', async (req, res) => {
         'X-JOBBER-GRAPHQL-VERSION': '2025-04-16'
       },
       body: JSON.stringify({ query: `{
-        quotes(first: 30, filter: { status: [DRAFT, SENT, APPROVED, CONVERTED] }) {
+        quotes(first: 30) {
           nodes {
             id
             title
