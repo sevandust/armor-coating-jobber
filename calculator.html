@@ -886,14 +886,9 @@
           var a = job.property.address;
           addr = [a.street, a.city, a.province, a.postalCode].filter(Boolean).join(', ');
         }
-        var sqft = '';
-        if (job.lineItems && job.lineItems.nodes && job.lineItems.nodes.length > 0) {
-          var li = job.lineItems.nodes[0];
-          if (li.quantity) sqft = Math.round(li.quantity);
-        }
-        var total = job.total ? Math.round(job.total) : '';
+        var total = (job.amounts && job.amounts.total) ? Math.round(job.amounts.total) : (job.total ? Math.round(job.total) : '');
         var title = job.title || ('Quote #' + (job.quoteNumber || (i+1)));
-        return { clientName: clientName, title: title, addr: addr, sqft: sqft, total: total };
+        return { id: job.id, clientName: clientName, title: title, addr: addr, total: total };
       });
 
       renderJobberList(allJobberQuotes);
@@ -914,8 +909,7 @@
       html += '<div class="job-pick-name">' + q.clientName + ' <span style="color:#888;font-weight:400;">— ' + q.title + '</span></div>';
       if (q.addr) html += '<div class="job-pick-detail">📍 ' + q.addr + '</div>';
       var details = [];
-      if (q.sqft) details.push('📐 ' + q.sqft + ' sq ft');
-      if (q.total) details.push('💰 $' + q.total);
+      if (q.total) details.push('💰 $' + q.total.toLocaleString());
       if (details.length) html += '<div class="job-pick-detail">' + details.join('  ·  ') + '</div>';
       html += '</button>';
     });
@@ -934,11 +928,29 @@
   function selectJobberJob(job) {
     document.getElementById('jobName').value  = job.clientName + (job.title ? ' — ' + job.title : '');
     document.getElementById('custAddr').value = job.addr  || '';
-    if (job.sqft)  document.getElementById('sqft').value  = job.sqft;
     if (job.total) document.getElementById('price').value = job.total;
     updateMapLink();
     closeJobberModal();
     showToast('✓ Quote Loaded!');
+
+    // Fetch line items to get square footage
+    if (job.id) {
+      var token = localStorage.getItem('jobber_token');
+      fetch(JOBBER_SERVER + '/quote/' + encodeURIComponent(job.id), {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.data && data.data.quote && data.data.quote.lineItems && data.data.quote.lineItems.nodes.length > 0) {
+          var li = data.data.quote.lineItems.nodes[0];
+          if (li.quantity) {
+            document.getElementById('sqft').value = Math.round(li.quantity);
+            showToast('✓ Quote + Sq Ft Loaded!');
+          }
+        }
+      })
+      .catch(function(err) { console.log('Line item fetch error:', err); });
+    }
   }
 
   function closeJobberModal() {
