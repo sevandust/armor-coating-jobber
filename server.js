@@ -55,6 +55,15 @@ app.get('/jobs', async (req, res) => {
             id
             title
             quoteNumber
+            subtotal
+            depositAmount
+            amountsTotal {
+              depositAmount
+              discountAmount
+              outstandingDepositAmount
+              subtotal
+              total
+            }
             client { name }
             property { address { street city province postalCode } }
             lineItems {
@@ -62,6 +71,7 @@ app.get('/jobs', async (req, res) => {
                 name
                 quantity
                 unitPrice
+                totalPrice
               }
             }
           }
@@ -70,6 +80,11 @@ app.get('/jobs', async (req, res) => {
     });
 
     const data = await response.json();
+
+    // Log the first quote so we can see the structure
+    if (data.data && data.data.quotes && data.data.quotes.nodes.length > 0) {
+      console.log('Sample quote:', JSON.stringify(data.data.quotes.nodes[0], null, 2));
+    }
 
     if (data.data && data.data.quotes) {
       data.data.jobs = { nodes: data.data.quotes.nodes };
