@@ -50,17 +50,14 @@ app.get('/jobs', async (req, res) => {
         'X-JOBBER-GRAPHQL-VERSION': '2025-04-16'
       },
       body: JSON.stringify({ query: `{
-        quotes(first: 30, filter: { statuses: [DRAFT, SENT, APPROVED, CONVERTED] }) {
+        quotes(first: 30, filter: { status: [DRAFT, SENT, APPROVED, CONVERTED] }) {
           nodes {
             id
             title
             quoteNumber
-            subtotal
-            depositAmount
-            amountsTotal {
+            amounts {
               depositAmount
               discountAmount
-              outstandingDepositAmount
               subtotal
               total
             }
@@ -81,7 +78,6 @@ app.get('/jobs', async (req, res) => {
 
     const data = await response.json();
 
-    // Log the first quote so we can see the structure
     if (data.data && data.data.quotes && data.data.quotes.nodes.length > 0) {
       console.log('Sample quote:', JSON.stringify(data.data.quotes.nodes[0], null, 2));
     }
