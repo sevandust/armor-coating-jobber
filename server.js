@@ -50,7 +50,7 @@ app.get('/jobs', async (req, res) => {
         'X-JOBBER-GRAPHQL-VERSION': '2025-04-16'
       },
       body: JSON.stringify({ query: `{
-        quotes(first: 20) {
+        quotes(first: 50) {
           nodes {
             id
             title
@@ -83,7 +83,6 @@ app.get('/jobs', async (req, res) => {
   }
 });
 
-// Separate endpoint to get line items for a single selected quote
 app.get('/quote/:id', async (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'No token' });
