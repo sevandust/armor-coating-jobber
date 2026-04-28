@@ -50,27 +50,17 @@ app.get('/jobs', async (req, res) => {
         'X-JOBBER-GRAPHQL-VERSION': '2025-04-16'
       },
       body: JSON.stringify({ query: `{
-        quotes(first: 30) {
+        quotes(first: 20) {
           nodes {
             id
             title
             quoteNumber
             amounts {
-              depositAmount
-              discountAmount
               subtotal
               total
             }
             client { name }
             property { address { street city province postalCode } }
-            lineItems {
-              nodes {
-                name
-                quantity
-                unitPrice
-                totalPrice
-              }
-            }
           }
         }
       }`})
@@ -87,6 +77,40 @@ app.get('/jobs', async (req, res) => {
       delete data.data.quotes;
     }
 
+    res.json(data);
+  } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Separate endpoint to get line items for a single selected quote
+app.get('/quote/:id', async (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const response = await fetch('https://api.getjobber.com/api/graphql', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'X-JOBBER-GRAPHQL-VERSION': '2025-04-16'
+      },
+      body: JSON.stringify({ query: `{
+        quote(id: "${req.params.id}") {
+          lineItems {
+            nodes {
+              name
+              quantity
+              unitPrice
+              totalPrice
+            }
+          }
+        }
+      }`})
+    });
+    const data = await response.json();
+    console.log('Quote detail:', JSON.stringify(data, null, 2));
     res.json(data);
   } catch(err) {
     res.status(500).json({ error: err.message });
