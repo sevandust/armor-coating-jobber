@@ -460,6 +460,7 @@
         <div class="result-row"><span class="r-label">Fuel</span><span class="r-val" id="rFuel">—</span></div>
         <div class="result-row"><span class="r-label">Drive Time</span><span class="r-val" id="rDrive">—</span></div>
         <div class="result-row"><span class="r-label">Overhead</span><span class="r-val" id="rOver">—</span></div>
+        <div class="result-row" style="background:#1a1a2e; border-color:#4a90d9;"><span class="r-label" style="color:#7ab4f0; font-weight:600;">Cost Per Sq Ft</span><span class="r-val" id="rCostPerSqft" style="color:#7ab4f0;">—</span></div>
         <div class="result-row"><span class="r-label" id="lblComm">Sales Commission</span><span class="r-val" id="rComm">—</span></div>
 
         <div class="result-row" style="margin-top:4px; background:#111f30; border-color:#2d5a8f;">
@@ -532,7 +533,8 @@
     var nFlake = Math.ceil(sqft / 215);
     var costMat = (nBase * cBase) + (nClear * cClear) + (nFlake * cFlake) + (uMender * cMender);
 
-    var commPct = sqft > 0 ? (price / sqft) / 100 : 0;
+    var pricePerSqft = sqft > 0 ? (price / sqft) : 0;
+    var commPct = sqft > 0 ? Math.max(0, pricePerSqft - 1) / 100 : 0;
     var costComm = price * commPct;
 
     var shareRate = 0.02;
@@ -545,6 +547,8 @@
 
     set('rMat', costMat); set('rLabor', labor); set('rFuel', fuel);
     set('rOver', overhead);
+    var costPerSqft = sqft > 0 ? (total / sqft) : 0;
+    document.getElementById('rCostPerSqft').innerText = sqft > 0 ? '$' + costPerSqft.toFixed(2) + ' / sq ft' : '—';
     document.getElementById('rDrive').innerText = driveTime + ' min';
     document.getElementById('lblComm').innerText = 'Sales Comm (' + (commPct*100).toFixed(2) + '%):';
     set('rComm', costComm);
@@ -811,7 +815,7 @@
     document.getElementById('calcTripCost').value = '';
 
     // Reset results display
-    ['rMat','rLabor','rFuel','rOver','rComm','rJustin','rChad','rWill','rTotal','rProfit'].forEach(id => {
+    ['rMat','rLabor','rFuel','rOver','rComm','rJustin','rChad','rWill','rTotal','rProfit','rCostPerSqft'].forEach(id => {
       document.getElementById(id).innerText = '—';
     });
     document.getElementById('rDrive').innerText = '—';
